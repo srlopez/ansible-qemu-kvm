@@ -1,0 +1,49 @@
+Más ayuda
+https://1984.lsi.us.es/wiki-ssoo/index.php/Virtualizaci%C3%B3n_con_libvirt
+https://blog.christophersmart.com/2020/03/03/using-ansible-to-define-and-manage-kvm-guests-and-networks-with-yaml-inventories/
+
+
+Cloneado de https://github.com/noahbailey/ansible-qemu-kvm
+Blog https://nbailey.ca/post/kvm-ansible-automation/
+
+y ADAPTADO
+0 LAS VARIABLES, DISTRIBUCIÓN, USUARIO, HOST, etc...
+  Lo escribimos el groups_vars/all.yml
+
+1 LAS PLANTILLAS DE CONFIGURTACIÓN
+  Para conocer el nombre adaptador
+  $ ip link 
+  y escogemos el primer link/ether: enp1s0
+  para ponerlo en network-config-v2.yml
+  # otro ejemplo de como se crea una seed de configuracion: https://gist.github.com/shettyg/455ff78605ea4c45febe7b5aa345c87d
+
+# ejecutamos la creacion de la clave publica 
+ssh-keygen -t rsa
+cat /home/santi/.ssh/id_rsa.pub
+
+# para ejecutar todo desplegando las vm
+sudo ansible-playbook local.yml 
+
+# para borrar las maquinas
+sudo ansible-playbook local.yml --tags "never"
+
+# Ejemplo de como crear la maquina si los ficheros de configuración
+# ya están creados
+
+virsh destroy u18-01 #stop
+virsh undefine u18-01 #delete
+virt-install \
+    --noautoconsole \
+    --name u18-svr-001 \
+    --memory 512 \
+    --vcpus 1 \
+    --disk /home/santi/kvm/images/u18-svr-001/u18-svr-001.img,device=disk,bus=virtio \
+    --disk /home/santi/kvm/images/u18-svr-001/cloud-config.img,device=cdrom \
+    --os-type linux \
+    --os-variant ubuntu18.04 \
+    --virt-type kvm \
+    --graphics none \
+    --network network=default,model=virtio \
+    --import
+virsh net-dhcp-leases default
+

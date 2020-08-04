@@ -1,0 +1,85 @@
+# ------------ Check if VM exists 
+# -------------------------------
+
+- name: "{{ vm.name }} :: Verificando VM storage "
+  file: 
+    state: directory 
+    path: "{{ kvm_path.vm_images }}/{{ vm.name }}"
+
+- name: "{{ vm.name }} :: copy-on-write image"
+  stat: 
+    path: "{{ kvm_path.vm_images }}/{{ vm.name }}/{{ vm.name }}.img"
+    get_checksum: no 
+  register: vm_stat
+
+# --------------------- Generate kick-off 
+# ---------------------------------------
+
+- name: "{{ vm.name }} :: cloud-config file"
+  template: 
+    src: templates/cloud-config.yml
+    dest: "{{ kvm_path.vm_images }}/{{ vm.name }}/cloud-config.yml"
+  when: vm_stat.stat.exists == false 
+
+- name: "{{ vm.name }} :: network metadata file"
+  template: 
+    src: templates/network-config-v2.yml
+    dest: "{{ kvm_path.vm_images }}/{{ vm.name }}/network-config-v2.yml"
+  when: vm_stat.stat.exists == false 
+
+# - name: "{{ vm.name }} :: cloud-config image "
+#   shell: 
+#     creates: "{{ kvm_path.vm_images }}/{{ vm.name }}/cloud-config.img"
+#     cmd: >-
+#       cloud-localds 
+#       --network-config={{ kvm_path.vm_images }}/{{ vm.name }}/network-config-v2.yml 
+#       {{ kvm_path.vm_images }}/{{ vm.name }}/cloud-config.img 
+#       {{ kvm_path.vm_images }}/{{ vm.name }}/cloud-config.yml 
+#     when: vm_stat.stat.exists == false  
+
+- name: "{{ vm.name }} :: cloud-config image "
+  shell: cloud-localds --network-config={{ kvm_path.vm_images }}/{{ vm.name }}/network-config-v2.yml {{ kvm_path.vm_images }}/{{ vm.name }}/cloud-config.img {{ kvm_path.vm_images }}/{{ vm.name }}/cloud-config.yml
+  args:
+    creates: "{{ kvm_path.vm_images }}/{{ vm.name }}/cloud-config.img"   
+  when: vm_stat.stat.exists == false  
+
+# ------------- Configure and launch VM
+# ---------------------------------
+
+- name: "{{ vm.name }} :: Provision Virtual Machine disk  "
+  copy: 
+    src: "{{ kvm_path.vm_iso }}/{{ ubuntu.img_name }}"
+    dest: "{{ kvm_path.vm_images }}/{{ vm.name }}/{{ vm.name }}.img" 
+    remote_src: true 
+  when: vm_stat.stat.exists == false 
+
+- name: "{{ vm.name }} :: Resize Virtual Machine disk "
+  shell: 
+    cmd: qemu-img resize {{ kvm_path.vm_images }}/{{ vm.name }}/{{ vm.name }}.img {{ vm.disk|default('5G') }}
+  when: vm_stat.stat.exists == false 
+
+- name: "{{ vm.name }} :: Create virtual machine "
+  command: >
+    virt-install 
+    --noautoconsole
+    --name {{ vm.name }}
+    --memory {{ vm.mem|default('512') }}
+    --vcpus  {{ vm.cpu|default('1') }}
+    --disk {{ kvm_path.vm_images }}/{{ vm.name }}/{{ vm.name }}.img,device=disk,bus=virtio 
+    --disk {{ kvm_path.vm_images }}/{{ vm.name }}/cloud-config.img,device=cdrom 
+    --os-type linux 
+    --os-variant {{ ubuntu.os_variant }}
+    --virt-type kvm 
+    --graphics none 
+    --network network=default,model=virtio  
+    --import
+  when: vm_stat.stat.exists == false 
+#  --network bridge={{ vm.bridge|default('default') }},model=virtio  
+
+# -------------------------- Set VM Autostartup 
+# ---------------------------------------------
+
+- name: "{{ vm.name }} start with host startup"
+  virt: 
+    name: "{{ vm.name }}"
+    autostart: no 

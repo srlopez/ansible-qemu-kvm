@@ -1,0 +1,39 @@
+kvm_path: 
+    vm_images: /home/santi/kvm/images
+    vm_iso: /home/santi/kvm/iso
+
+# Ubuntu 18.04 bionic
+ubuntu:
+  os_variant: ubuntu18.04
+  img_name: bionic-server-cloudimg-amd64.img
+  url: https://cloud-images.ubuntu.com/bionic/current/bionic-server-cloudimg-amd64.img
+   
+
+#----- USUARIOS Y MAQUINAS
+#----------------------------
+users: 
+    - name: santi
+      full_name: santi
+      passwd: $6$rounds=2048$MQPdMo9yH94Q$yYhzuE7bG7RyEmB9my4lh8zp1YSnnjBFui1pccP7iRniUkavMUx/MHM7E82a9j4XEZQnwx2mRyuMQy.OjTXUL.
+      pub_key: ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQCxXyapVEzk1hNjr1ffEYSnnhLwbK0H6CilWjUGpoDuDLmvAIOTHbrk8fTbKFFwY+6dvPQesLcch4zIgBRKcYRcnUTPVFC9drXPLg7PNTTeCxBiXRf+k7x5ZYJcEWu3MHksMHaCcU7f/ERE6w+3qHbqyC5QrON1N3nT/Jn906oyRlGxkwP93I9P/MjFcGCK/mjN12xz7t8y1DrOdWdX2FF1qAlS7ptD+By+MAFOigGRZNpK9ShYjT/NUH2Cgkvr+V08IGalD5H56rWD0uYV0YQSMFNHCcmUb2kI8GAxTq138jnD5aRSEFaK1Nbf/5WIrVdxBVTZSos1H+yqCzjmuoK/MIms8En9T1psKdMBFX9mTewtLgaGhF9Wc8c5jsq64qlrIPZZiImzNYeY2ktv7WVPZBOiTG3wRermCNFTrqXd73swSBN2zWapRftVITQg/PoKYglMPMJYliqpETvYRXse6CydtOcMu+/JAyQ/CCeojO98CplYMOHBr9nlO+p6+LM= santi@slimbook
+
+domain: local
+virtual_machines: 
+    - name: u18-01 
+      cpu: 1
+      mem: 1024 
+      disk: 5G
+#BRIDGE NO UTILIZADO
+      bridge: virbr0 
+      net: 
+        ip: 192.168.122.101/24
+        gateway: 192.168.122.1 
+        domain: local
+        dns: 
+          - 1.1.1.1
+          - 9.9.9.9
+    - name: u18-02
+      cpu: 1
+      mem: 1024
+      disk: 10G
+      bridge: virbr0 

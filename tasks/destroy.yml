@@ -1,0 +1,15 @@
+# --------------------------------------------------------------------------- KVM QEMU Ansible Role 
+# -------------------------------------------------------------------------------------------------
+
+- name: Destroy Virtual Machines
+  shell: |
+    echo {{ vm.name }}
+    virsh destroy {{ vm.name }} #stop
+    virsh undefine {{ vm.name }} #delete
+    rm -rf {{ kvm_path.vm_images }}/{{ vm.name }}
+  register: output
+
+  loop: "{{ virtual_machines }}"
+  loop_control: 
+    loop_var: vm
+  tags: [ 'never' ]

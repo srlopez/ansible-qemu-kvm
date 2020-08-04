@@ -1,0 +1,66 @@
+# ---------- Install base system
+# ------------------------------
+# INSTALACION DE LA HERRAMIENTA Y VERIFICACIÓN DEL SERVICIO
+
+- name: KVM_PATH and QEMU System components 
+  apt: 
+    name: 
+      # - python-libvirt
+      # - python-lxml
+      - cloud-image-utils
+
+- name: Libvirtd systemd service
+  service: 
+    name: libvirtd
+    enabled: true 
+    state: started 
+  
+# ------ Manage cloud image
+# -------------------------
+# VERIFICACION DE LA INSTALACIÓN
+# DESCARGA DE LAS IMAGENES
+# Y CONVERSION img->qcow2
+
+- name: Directorio de ISO/IMG/ originales
+  file: 
+    path: "{{ kvm_path.vm_iso }}"
+    state: directory 
+
+- name: Check Ubuntu cloud image
+  uri: 
+    url: "{{ ubuntu.url }}"
+    method: HEAD
+  register: cloudimg_http_stat
+  check_mode: no 
+
+- name: Check local cloud image 
+  stat: 
+    path: "{{ kvm_path.vm_iso }}/{{ ubuntu.img_name }}" 
+    get_checksum: no 
+  register: cloudimg_local_stat 
+
+- name: Update Ubuntu cloud image
+  get_url:
+    url: "{{ ubuntu.url }}"
+    dest: "{{ kvm_path.vm_iso }}/{{ ubuntu.img_name }}" 
+  when: not cloudimg_local_stat.stat.exists or 
+        cloudimg_local_stat.stat.size != cloudimg_http_stat.content_length
+  register: cloudimg_local_updated 
+
+# - name: Convert cloud image qcow format 
+#   shell: 
+#     chdir: "{{ kvm_path.vm_images }}"
+#     cmd: qemu-img convert -f qcow2 "{{ ubuntu.img_name }}" "{{ ubuntu.img_name }}.qcow2"
+#     creates: "{{ kvm_path.vm_images }}/{{ ubuntu.img_name }}.qcow2"
+#   when: cloudimg_local_updated.changed|bool
+
+# ------ VM Directory 
+# -------------------
+
+- name: Virtual machine directory 
+  file: 
+    path: "{{ kvm_path.vm_images }}"
+    state: directory 
+    owner: root
+    group: root
+    mode: 0755
