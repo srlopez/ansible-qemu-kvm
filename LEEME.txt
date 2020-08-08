@@ -34,11 +34,11 @@ virsh destroy u18-01 #stop
 virsh undefine u18-01 #delete
 virt-install \
     --noautoconsole \
-    --name u18-svr-001 \
+    --name u18-01 \
     --memory 512 \
     --vcpus 1 \
-    --disk /home/santi/kvm/images/u18-svr-001/u18-svr-001.img,device=disk,bus=virtio \
-    --disk /home/santi/kvm/images/u18-svr-001/cloud-config.img,device=cdrom \
+    --disk /home/santi/kvm/images/u18-01/u18-01.img,device=disk,bus=virtio \
+    --disk /home/santi/kvm/images/u18-01/cloud-config.img,device=cdrom \
     --os-type linux \
     --os-variant ubuntu18.04 \
     --virt-type kvm \
